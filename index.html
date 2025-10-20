@@ -1,0 +1,156 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <link 
+    rel="shortcut icon" type="image/png" 
+    href="LogoVale.jpg" 
+  />
+
+  <title>Verificador de Lacres</title>
+  
+  <!-- Bootstrap 5 -->
+  <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet" />
+  
+  <!-- Google Fonts - Inter -->
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600&display=swap" rel="stylesheet" />
+
+  <style>
+
+    body {
+      background-color: #f9f9f9;
+      font-family: 'Inter', sans-serif;
+      color: #333;
+    }
+
+    .container {
+      max-width: 720px;
+      margin-top: 60px;
+    }
+
+    .form-label {
+      font-weight: 500;
+    }
+
+    textarea {
+      resize: none;
+    }
+
+    .table-summary th {
+      width: 50%;
+      font-weight: 500;
+    }
+
+    .alert {
+      font-size: 0.95rem;
+    }
+
+    .section-title {
+      font-size: 1.25rem;
+      font-weight: 600;
+      margin-bottom: 1rem;
+      color: #212529;
+    }
+  </style>
+</head>
+<body>
+
+  <div class="container bg-white shadow-sm rounded p-5">
+  <div class="text-center mb-4">
+    <img src="LogoVale.jpg" alt="Logo da Vale" class="img-fluid" style="max-width: 120px;">
+  </div>
+    <h2 class="text-center mb-4">Verificador de Lacres</h2>
+
+    <div class="mb-3">
+      <label for="inputLacres" class="form-label">Números dos lacres (separados por vírgula):</label>
+      <textarea class="form-control" id="inputLacres" rows="4" placeholder="Ex: 1234,4321,1243,3412"></textarea>
+    </div>
+
+    <div class="d-grid gap-2 mb-3">
+      <button class="btn btn-dark" onclick="verificarLacres()">Verificar</button>
+    </div>
+
+    <div id="mensagem" class="alert d-none" role="alert"></div>
+
+    <div id="resultado" class="mt-4 d-none">
+      <div class="section-title">Resumo da Verificação</div>
+      <table class="table table-bordered table-summary">
+        <tbody>
+          <tr>
+            <th>Total de lacres inseridos</th>
+            <td id="totalLacres"></td>
+          </tr>
+          <tr>
+            <th>Quantidade única de lacres</th>
+            <td id="lacresUnicos"></td>
+          </tr>
+          <tr>
+            <th>Lacres repetidos</th>
+            <td id="lacresRepetidos"></td>
+          </tr>
+        </tbody>
+      </table>
+    </div>
+  </div>
+
+  <script>
+    function mostrarMensagem(tipo, texto) {
+      const msg = document.getElementById("mensagem");
+      msg.className = "alert alert-" + tipo;
+      msg.textContent = texto;
+      msg.classList.remove("d-none");
+    }
+
+    function limparMensagem() {
+      const msg = document.getElementById("mensagem");
+      msg.classList.add("d-none");
+      msg.textContent = '';
+    }
+
+    function verificarLacres() {
+      limparMensagem();
+      const input = document.getElementById("inputLacres").value;
+
+      if (!input.trim()) {
+        mostrarMensagem("warning", "Por favor, insira ao menos um número de lacre.");
+        document.getElementById("resultado").classList.add("d-none");
+        return;
+      }
+
+      let lacres = input.split(',')
+        .map(item => item.trim())
+        .filter(item => item !== "");
+
+      const regexNumerico = /^\d+$/;
+      const invalidos = lacres.filter(l => !regexNumerico.test(l));
+
+      if (invalidos.length > 0) {
+        mostrarMensagem("danger", `Os seguintes valores são inválidos: ${invalidos.join(', ')}. Apenas números inteiros são permitidos.`);
+        document.getElementById("resultado").classList.add("d-none");
+        return;
+      }
+
+      const total = lacres.length;
+      const contagem = {};
+      const repetidos = [];
+
+      lacres.forEach(lacre => {
+        contagem[lacre] = (contagem[lacre] || 0) + 1;
+        if (contagem[lacre] === 2) {
+          repetidos.push(lacre);
+        }
+      });
+
+      document.getElementById("totalLacres").textContent = total;
+      document.getElementById("lacresUnicos").textContent = Object.keys(contagem).length;
+      document.getElementById("lacresRepetidos").textContent = 
+        repetidos.length > 0 ? repetidos.join(', ') : "Nenhum";
+
+      document.getElementById("resultado").classList.remove("d-none");
+      mostrarMensagem("success", "Verificação concluída.");
+    }
+  </script>
+
+</body>
+</html>
