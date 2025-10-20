@@ -132,7 +132,7 @@
           class="form-control" 
           id="inputLacres" 
           rows="4" 
-          placeholder="Ex: 1234,4321,1243,3412 ou 1234/4321/1243/3412"
+          placeholder="Ex: 1234,4321,1243,3412 ou 1234/4321/1243/3412 ou 1234.4321.1243.3412"
           required
         ></textarea>
         <div class="valid-feedback">
@@ -142,7 +142,7 @@
           Por favor, insira pelo menos um número de lacre válido.
         </div>
         <div class="separator-info">
-          Você pode usar vírgula (,) ou barra (/) como separador
+          Você pode usar vírgula (,), ponto (.) ou barra (/) como separador
         </div>
       </div>
 
@@ -217,8 +217,8 @@
     });
 
     function processarInputLacres(input) {
-      // Substituir barras por vírgulas e depois separar por vírgulas
-      return input.replace(/\//g, ',')
+      // Substituir todos os separadores (ponto, barra) por vírgula e depois separar por vírgulas
+      return input.replace(/[./]/g, ',')
                  .split(',')
                  .map(item => item.trim())
                  .filter(item => item !== "");
@@ -247,7 +247,7 @@
         return;
       }
 
-      // Processar input aceitando vírgula ou barra como separador
+      // Processar input aceitando vírgula, ponto ou barra como separador
       let lacres = processarInputLacres(input);
 
       const regexNumerico = /^\d+$/;
