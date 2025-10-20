@@ -17,7 +17,6 @@
   <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600&display=swap" rel="stylesheet" />
 
   <style>
-
     body {
       background-color: #f9f9f9;
       font-family: 'Inter', sans-serif;
@@ -35,6 +34,7 @@
 
     textarea {
       resize: none;
+      transition: all 0.3s ease;
     }
 
     .table-summary th {
@@ -52,28 +52,108 @@
       margin-bottom: 1rem;
       color: #212529;
     }
+    
+    .valid-feedback, .invalid-feedback {
+      display: none;
+      font-size: 0.875rem;
+      margin-top: 0.25rem;
+    }
+    
+    .was-validated .form-control:valid ~ .valid-feedback,
+    .was-validated .form-control:invalid ~ .invalid-feedback {
+      display: block;
+    }
+    
+    .form-control.is-valid {
+      border-color: #198754;
+      padding-right: calc(1.5em + 0.75rem);
+      background-image: url("data:image/svg+xml,%3csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 8 8'%3e%3cpath fill='%23198754' d='M2.3 6.73.6 4.53c-.4-1.04.46-1.4 1.1-.8l1.1 1.4 3.4-3.8c.6-.63 1.6-.27 1.2.7l-4 4.6c-.43.5-.8.4-1.1.1z'/%3e%3c/svg%3e");
+      background-repeat: no-repeat;
+      background-position: right calc(0.375em + 0.1875rem) center;
+      background-size: calc(0.75em + 0.375rem) calc(0.75em + 0.375rem);
+    }
+    
+    .form-control.is-invalid {
+      border-color: #dc3545;
+      padding-right: calc(1.5em + 0.75rem);
+      background-image: url("data:image/svg+xml,%3csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 12 12' width='12' height='12' fill='none' stroke='%23dc3545'%3e%3ccircle cx='6' cy='6' r='4.5'/%3e%3cpath d='m5.8 3.6.4.4.4-.4'/%3e%3cpath d='M6 7v2'/%3e%3c/svg%3e");
+      background-repeat: no-repeat;
+      background-position: right calc(0.375em + 0.1875rem) center;
+      background-size: calc(0.75em + 0.375rem) calc(0.75em + 0.375rem);
+    }
+    
+    .lacre-item {
+      display: inline-block;
+      background-color: #e9ecef;
+      border-radius: 4px;
+      padding: 4px 8px;
+      margin: 2px;
+      font-size: 0.875rem;
+    }
+    
+    .lacre-duplicado {
+      background-color: #f8d7da;
+      color: #721c24;
+    }
+    
+    .lacre-valido {
+      background-color: #d1edff;
+      color: #0c5460;
+    }
+    
+    .separator-info {
+      font-size: 0.8rem;
+      color: #6c757d;
+      margin-top: 0.25rem;
+    }
+    
+    .results-section {
+      animation: fadeIn 0.5s ease-in-out;
+    }
+    
+    @keyframes fadeIn {
+      from { opacity: 0; transform: translateY(10px); }
+      to { opacity: 1; transform: translateY(0); }
+    }
   </style>
 </head>
 <body>
 
   <div class="container bg-white shadow-sm rounded p-5">
-  <div class="text-center mb-4">
-    <img src="LogoVale.jpg" alt="Logo da Vale" class="img-fluid" style="max-width: 120px;">
-  </div>
+    <div class="text-center mb-4">
+      <img src="LogoVale.jpg" alt="Logo da Vale" class="img-fluid" style="max-width: 120px;">
+    </div>
     <h2 class="text-center mb-4">Verificador de Lacres</h2>
 
-    <div class="mb-3">
-      <label for="inputLacres" class="form-label">Números dos lacres (separados por vírgula):</label>
-      <textarea class="form-control" id="inputLacres" rows="4" placeholder="Ex: 1234,4321,1243,3412"></textarea>
-    </div>
+    <form id="lacresForm" class="needs-validation" novalidate>
+      <div class="mb-3">
+        <label for="inputLacres" class="form-label">Números dos lacres:</label>
+        <textarea 
+          class="form-control" 
+          id="inputLacres" 
+          rows="4" 
+          placeholder="Ex: 1234,4321,1243,3412 ou 1234/4321/1243/3412"
+          required
+        ></textarea>
+        <div class="valid-feedback">
+          ✓ Formato válido detectado
+        </div>
+        <div class="invalid-feedback">
+          Por favor, insira pelo menos um número de lacre válido.
+        </div>
+        <div class="separator-info">
+          Você pode usar vírgula (,) ou barra (/) como separador
+        </div>
+      </div>
 
-    <div class="d-grid gap-2 mb-3">
-      <button class="btn btn-dark" onclick="verificarLacres()">Verificar</button>
-    </div>
+      <div class="d-grid gap-2 mb-3">
+        <button class="btn btn-dark" type="submit">Verificar</button>
+      </div>
+    </form>
 
     <div id="mensagem" class="alert d-none" role="alert"></div>
 
-    <div id="resultado" class="mt-4 d-none">
+    <div id="resultado" class="mt-4 d-none results-section">
       <div class="section-title">Resumo da Verificação</div>
       <table class="table table-bordered table-summary">
         <tbody>
@@ -91,10 +171,59 @@
           </tr>
         </tbody>
       </table>
+      
+      <div class="mt-4">
+        <h6 class="mb-3">Detalhamento dos Lacres</h6>
+        <div id="detalhesLacres"></div>
+      </div>
     </div>
   </div>
 
   <script>
+    // Configurar validação do formulário
+    const form = document.getElementById('lacresForm');
+    
+    form.addEventListener('submit', function(event) {
+      event.preventDefault();
+      event.stopPropagation();
+      
+      if (form.checkValidity()) {
+        verificarLacres();
+      }
+      
+      form.classList.add('was-validated');
+    });
+    
+    // Validação em tempo real para melhor UX
+    document.getElementById('inputLacres').addEventListener('input', function() {
+      const value = this.value.trim();
+      
+      if (value.length > 0) {
+        // Verificar se há pelo menos um número válido
+        const lacres = processarInputLacres(value);
+        const regexNumerico = /^\d+$/;
+        const validos = lacres.filter(l => regexNumerico.test(l));
+        
+        if (validos.length > 0) {
+          this.classList.remove('is-invalid');
+          this.classList.add('is-valid');
+        } else {
+          this.classList.remove('is-valid');
+          this.classList.add('is-invalid');
+        }
+      } else {
+        this.classList.remove('is-valid', 'is-invalid');
+      }
+    });
+
+    function processarInputLacres(input) {
+      // Substituir barras por vírgulas e depois separar por vírgulas
+      return input.replace(/\//g, ',')
+                 .split(',')
+                 .map(item => item.trim())
+                 .filter(item => item !== "");
+    }
+
     function mostrarMensagem(tipo, texto) {
       const msg = document.getElementById("mensagem");
       msg.className = "alert alert-" + tipo;
@@ -118,9 +247,8 @@
         return;
       }
 
-      let lacres = input.split(',')
-        .map(item => item.trim())
-        .filter(item => item !== "");
+      // Processar input aceitando vírgula ou barra como separador
+      let lacres = processarInputLacres(input);
 
       const regexNumerico = /^\d+$/;
       const invalidos = lacres.filter(l => !regexNumerico.test(l));
@@ -142,13 +270,82 @@
         }
       });
 
+      // Atualizar resumo
       document.getElementById("totalLacres").textContent = total;
       document.getElementById("lacresUnicos").textContent = Object.keys(contagem).length;
       document.getElementById("lacresRepetidos").textContent = 
-        repetidos.length > 0 ? repetidos.join(', ') : "Nenhum";
+        repetidos.length > 0 ? `${repetidos.length} lacre(s): ${repetidos.join(', ')}` : "Nenhum";
+
+      // Mostrar detalhamento
+      mostrarDetalhesLacres(lacres, contagem);
 
       document.getElementById("resultado").classList.remove("d-none");
-      mostrarMensagem("success", "Verificação concluída.");
+      mostrarMensagem("success", "Verificação concluída com sucesso!");
+    }
+    
+    function mostrarDetalhesLacres(lacres, contagem) {
+      const container = document.getElementById("detalhesLacres");
+      container.innerHTML = "";
+      
+      // Agrupar lacres por status
+      const unicos = [];
+      const duplicados = [];
+      
+      lacres.forEach(lacre => {
+        if (contagem[lacre] === 1) {
+          unicos.push(lacre);
+        } else {
+          duplicados.push(lacre);
+        }
+      });
+      
+      // Remover duplicatas para exibição
+      const unicosDistintos = [...new Set(unicos)];
+      const duplicadosDistintos = [...new Set(duplicados)];
+      
+      // Exibir lacres válidos
+      if (unicosDistintos.length > 0) {
+        const div = document.createElement("div");
+        div.className = "mb-3";
+        
+        const titulo = document.createElement("h6");
+        titulo.className = "text-success";
+        titulo.textContent = `Lacres válidos (${unicosDistintos.length})`;
+        div.appendChild(titulo);
+        
+        const lacresContainer = document.createElement("div");
+        unicosDistintos.forEach(lacre => {
+          const span = document.createElement("span");
+          span.className = "lacre-item lacre-valido";
+          span.textContent = lacre;
+          lacresContainer.appendChild(span);
+        });
+        div.appendChild(lacresContainer);
+        
+        container.appendChild(div);
+      }
+      
+      // Exibir lacres duplicados
+      if (duplicadosDistintos.length > 0) {
+        const div = document.createElement("div");
+        div.className = "mb-3";
+        
+        const titulo = document.createElement("h6");
+        titulo.className = "text-danger";
+        titulo.textContent = `Lacres duplicados (${duplicadosDistintos.length})`;
+        div.appendChild(titulo);
+        
+        const lacresContainer = document.createElement("div");
+        duplicadosDistintos.forEach(lacre => {
+          const span = document.createElement("span");
+          span.className = "lacre-item lacre-duplicado";
+          span.textContent = lacre;
+          lacresContainer.appendChild(span);
+        });
+        div.appendChild(lacresContainer);
+        
+        container.appendChild(div);
+      }
     }
   </script>
 
